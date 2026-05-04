@@ -85,6 +85,7 @@ def searchCompanyWhoxy( _whoxy_key ):
         sys.stdout.write( '%s[+] whoxy key found, calling whoxy api targeting company%s\n' % (fg('green'),attr(0)) )
 
     for company in t_data['companies']:
+        new = 0
         page = 1
         company = company.replace( ' ', '+' )
         if _verbose:
@@ -92,8 +93,8 @@ def searchCompanyWhoxy( _whoxy_key ):
 
         while True:
             time.sleep(2)
-            url = 'http://api.whoxy.com/?key='+_whoxy_key+'&reverse=whois&company='+company+'&mode=micro&page='+str(page)
-            # url = 'http://api.whoxy.com/?key='+_whoxy_key+'&search_identifier=company&search_keyword='+company+'&mode=micro&page='+str(page)
+            url = 'https://api.whoxy.com/?key='+_whoxy_key+'&reverse=whois&company='+company+'&mode=micro&page='+str(page)
+            # url = 'https://api.whoxy.com/?key='+_whoxy_key+'&search_identifier=company&search_keyword='+company+'&mode=micro&page='+str(page)
             page = page + 1
             if _verbose:
                 sys.stdout.write( '%s[+] %s%s\n' % (fg('white'),url,attr(0)) )
@@ -109,10 +110,15 @@ def searchCompanyWhoxy( _whoxy_key ):
             if 'search_result' in t_json and len(t_json['search_result']):
                 for result in t_json['search_result']:
                     if not result['domain_name'] in t_data['domains']:
+                        new = new + 1
                         t_data['domains'].append( result['domain_name'] )
                         print( result['domain_name'] )
             else:
                 break
+
+        if _verbose:
+            sys.stdout.write( '%s[+] new domain for company %s: %d%s\n' % (fg('green'),company,new,attr(0)) )
+
 
 
 def searchEmailWhoxy( _whoxy_key ):
@@ -122,14 +128,15 @@ def searchEmailWhoxy( _whoxy_key ):
         sys.stdout.write( '%s[+] whoxy key found, calling whoxy api targeting email%s\n' % (fg('green'),attr(0)) )
 
     for email in t_data['emails']:
+        new = 0
         page = 1
         if _verbose:
             sys.stdout.write( '%s[+] search for email: %s%s\n' % (fg('green'),email,attr(0)) )
 
         while True:
             time.sleep(2)
-            url = 'http://api.whoxy.com/?key='+_whoxy_key+'&reverse=whois&email='+email+'&mode=micro&page='+str(page)
-            # url = 'http://api.whoxy.com/?key='+_whoxy_key+'&search_identifier=email&search_keyword='+email+'&mode=micro&page='+str(page)
+            url = 'https://api.whoxy.com/?key='+_whoxy_key+'&reverse=whois&email='+email+'&mode=micro&page='+str(page)
+            # url = 'https://api.whoxy.com/?key='+_whoxy_key+'&search_identifier=email&search_keyword='+email+'&mode=micro&page='+str(page)
             page = page + 1
             if _verbose:
                 sys.stdout.write( '%s[+] %s%s\n' % (fg('white'),url,attr(0)) )
@@ -145,10 +152,14 @@ def searchEmailWhoxy( _whoxy_key ):
             if 'search_result' in t_json and len(t_json['search_result']):
                 for result in t_json['search_result']:
                     if not result['domain_name'] in t_data['domains']:
+                        new = new + 1
                         t_data['domains'].append( result['domain_name'] )
                         print( result['domain_name'] )
             else:
                 break
+
+        if _verbose:
+            sys.stdout.write( '%s[+] new domain for email %s: %d%s\n' % (fg('green'),email,new,attr(0)) )
 
 
 # https://www.whoxy.com/reverse-whois/demo.php
@@ -158,7 +169,7 @@ def searchDomainWhoxy( _domain, _whoxy_key ):
     if _verbose:
         sys.stdout.write( '%s[+] whoxy key found, calling whoxy api targeting domain%s\n' % (fg('green'),attr(0)) )
 
-    url = 'http://api.whoxy.com/?key='+_whoxy_key+'&whois='+_domain
+    url = 'https://api.whoxy.com/?key='+_whoxy_key+'&whois='+_domain
     if _verbose:
         sys.stdout.write( '%s[+] %s%s\n' % (fg('white'),url,attr(0)) )
 
@@ -312,5 +323,5 @@ if "whoxy" in t_sources:
     if len(_whoxy_key) and len(t_data['companies']):
         searchCompanyWhoxy( _whoxy_key )
 
-    # if len(_whoxy_key) and len(t_data['emails']):
-    #     searchEmailWhoxy( _whoxy_key )
+    if len(_whoxy_key) and len(t_data['emails']):
+        searchEmailWhoxy( _whoxy_key )
