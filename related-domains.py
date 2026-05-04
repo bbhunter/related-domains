@@ -4,6 +4,7 @@ import os
 import sys
 import re
 import json
+import time
 import requests
 import argparse
 import tldextract
@@ -90,7 +91,9 @@ def searchCompanyWhoxy( _whoxy_key ):
             sys.stdout.write( '%s[+] search for company: %s%s\n' % (fg('green'),company,attr(0)) )
 
         while True:
+            time.sleep(2)
             url = 'http://api.whoxy.com/?key='+_whoxy_key+'&reverse=whois&company='+company+'&mode=micro&page='+str(page)
+            # url = 'http://api.whoxy.com/?key='+_whoxy_key+'&search_identifier=company&search_keyword='+company+'&mode=micro&page='+str(page)
             page = page + 1
             if _verbose:
                 sys.stdout.write( '%s[+] %s%s\n' % (fg('white'),url,attr(0)) )
@@ -124,7 +127,9 @@ def searchEmailWhoxy( _whoxy_key ):
             sys.stdout.write( '%s[+] search for email: %s%s\n' % (fg('green'),email,attr(0)) )
 
         while True:
+            time.sleep(2)
             url = 'http://api.whoxy.com/?key='+_whoxy_key+'&reverse=whois&email='+email+'&mode=micro&page='+str(page)
+            # url = 'http://api.whoxy.com/?key='+_whoxy_key+'&search_identifier=email&search_keyword='+email+'&mode=micro&page='+str(page)
             page = page + 1
             if _verbose:
                 sys.stdout.write( '%s[+] %s%s\n' % (fg('white'),url,attr(0)) )
@@ -146,6 +151,7 @@ def searchEmailWhoxy( _whoxy_key ):
                 break
 
 
+# https://www.whoxy.com/reverse-whois/demo.php
 def searchDomainWhoxy( _domain, _whoxy_key ):
     global _verbose, t_data
 
@@ -168,48 +174,76 @@ def searchDomainWhoxy( _domain, _whoxy_key ):
     if _verbose:
         print(t_data['companies'])
         print(t_data['emails'])
+        # exit()
 
 
 def extractDatasWhoxy( t_json ):
     global _verbose, t_data
 
+    tmp_data = []
+
     for index in ['technical_contact','registrant_contact','administrative_contact']:
         if index in t_json:
-            company,email = extractDataWhoxy( t_json, t_json[index] )
-            if company and company not in t_data['companies']:
-                t_data['companies'].append( company )
-            if email and email not in t_data['emails']:
-                t_data['emails'].append( email )
+            if index in t_json and len(t_json[index]):
+                if 'company_name' in t_json[index]:
+                    tmp_data.append( t_json[index]['company_name'] )
+                if 'email_address' in t_json[index]:
+                    tmp_data.append( t_json[index]['email_address'] )
+
+    for data in tmp_data:
+        for wbl in w_blacklist:
+            if wbl in data:
+                break
+            if '@' in data:
+                if not data in t_data['emails']:
+                    t_data['emails'].append( data )
+            else:
+                if not data in t_data['companies']:
+                    t_data['companies'].append( data )
 
     return
 
 
-def extractDataWhoxy( t_json, tab ):
-    global _verbose, t_data
+# def extractDatasWhoxy( t_json ):
+#     global _verbose, t_data
 
-    if not 'company_name' in tab:
-        company = False
-    elif 'registrant_contact' in t_json and 'company_name' in t_json['registrant_contact']:
-        company = t_json['registrant_contact']['company_name']
-        for wbl in w_blacklist:
-            if wbl in company.lower():
-                company = False
-                break
-    else:
-        company = False
+#     for index in ['technical_contact','registrant_contact','administrative_contact']:
+#         if index in t_json:
+#             company,email = extractCompanyNameAndEmail( t_json, t_json[index] )
+#             if company and company not in t_data['companies']:
+#                 t_data['companies'].append( company )
+#             if email and email not in t_data['emails']:
+#                 t_data['emails'].append( email )
 
-    if not 'email_address' in tab:
-        email = False
-    elif 'registrant_contact' in t_json and 'email_address' in t_json['registrant_contact']:
-        email = t_json['registrant_contact']['email_address']
-        for wbl in w_blacklist:
-            if wbl in email.lower():
-                email = False
-                break
-    else:
-        email = False
+#     return
 
-    return company,email
+
+# def extractCompanyNameAndEmail( t_json, tab ):
+#     global _verbose, t_data
+
+#     if not 'company_name' in tab:
+#         company = False
+#     elif 'registrant_contact' in t_json and 'company_name' in t_json['registrant_contact']:
+#         company = t_json['registrant_contact']['company_name']
+#         for wbl in w_blacklist:
+#             if wbl in company.lower():
+#                 company = False
+#                 break
+#     else:
+#         company = False
+
+#     if not 'email_address' in tab:
+#         email = False
+#     elif 'registrant_contact' in t_json and 'email_address' in t_json['registrant_contact']:
+#         email = t_json['registrant_contact']['email_address']
+#         for wbl in w_blacklist:
+#             if wbl in email.lower():
+#                 email = False
+#                 break
+#     else:
+#         email = False
+
+#     return company,email
 
 
 
@@ -219,7 +253,8 @@ parser.add_argument( "-b","--builtwith",help="use builtwith as an additional sou
 parser.add_argument( "-c","--company",help="company you are looking for (required or -d or -e)" )
 parser.add_argument( "-d","--domain",help="domain you already know (required or -c)" )
 parser.add_argument( "-k","--key",help="whoxy api key (required)" )
-parser.add_argument( "-s","--source",help="list of sources separated by comma, available sources are: builtwith,crtsh,whoxy (default=whoxy)" )
+parser.add_argument( "-s","--source",help="list of sources separated by comma, available sources are: whoxy (default=whoxy)" )
+# parser.add_argument( "-s","--source",help="list of sources separated by comma, available sources are: builtwith,crtsh,whoxy (default=whoxy)" )
 parser.add_argument( "-v","--verbose",help="enable verbose mode, default off", action="store_true" )
 parser.parse_args()
 args = parser.parse_args()
@@ -262,11 +297,11 @@ if _domain:
     if _verbose:
         sys.stdout.write( '%s[+] search for domain: %s%s\n' % (fg('green'),_domain,attr(0)) )
 
-    if "crtsh" in t_sources:
-        searchDomainCrtsh( _domain )
+    # if "crtsh" in t_sources:
+    #     searchDomainCrtsh( _domain )
 
-    if "builtwith" in t_sources:
-        searchDomainBuiltwith( _domain )
+    # if "builtwith" in t_sources:
+    #     searchDomainBuiltwith( _domain )
 
     if "whoxy" in t_sources:
         if len(_whoxy_key):
@@ -277,5 +312,5 @@ if "whoxy" in t_sources:
     if len(_whoxy_key) and len(t_data['companies']):
         searchCompanyWhoxy( _whoxy_key )
 
-    if len(_whoxy_key) and len(t_data['emails']):
-        searchEmailWhoxy( _whoxy_key )
+    # if len(_whoxy_key) and len(t_data['emails']):
+    #     searchEmailWhoxy( _whoxy_key )

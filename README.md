@@ -24,9 +24,9 @@ This Python tool does not search for similar domains, it uses the informations o
 
 Implemented sources are:
 
-- builtwith.com
-- whoxy.com
-- crtsh
+- builtwith.com  
+- whoxy.com  
+- crtsh  
 
 ## Requirements
 
