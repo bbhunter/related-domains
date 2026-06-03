@@ -10,7 +10,7 @@ import argparse
 import tldextract
 from colored import fg, bg, attr
 
-w_blacklist = [ 'privacy', 'redacted', 'destination', 'dnstination', 'west', 'select request email', 'markmonitor' ]
+w_blacklist = [ 'privacy', 'redacted', 'destination', 'dnstination', 'west', 'select request email', 'markmonitor', 'nameshield', 'service noms de domaine' ]
 
 
 # https://twitter.com/intigriti/status/1639610098954932225
@@ -85,6 +85,13 @@ def searchCompanyWhoxy( _whoxy_key ):
         sys.stdout.write( '%s[+] whoxy key found, calling whoxy api targeting company%s\n' % (fg('green'),attr(0)) )
 
     for company in t_data['companies']:
+
+        confirm = input("Grab domains registered with company \""+company+"\"? (y/n) ")
+        if not confirm.lower() == "y":
+            if _verbose:
+                sys.stdout.write( '%s[-] skip company: %s%s\n' % (fg('red'),company,attr(0)) )
+            continue
+
         new = 0
         page = 1
         company = company.replace( ' ', '+' )
@@ -128,6 +135,15 @@ def searchEmailWhoxy( _whoxy_key ):
         sys.stdout.write( '%s[+] whoxy key found, calling whoxy api targeting email%s\n' % (fg('green'),attr(0)) )
 
     for email in t_data['emails']:
+
+        confirm = input("Grab domains registered with email \""+email+"\"? (y/n) ")
+        if not confirm.lower() == "y":
+            if _verbose:
+                sys.stdout.write( '%s[-] skip email: %s%s\n' % (fg('red'),email,attr(0)) )
+            continue
+
+        sys.stdout.write( '%s[+] search for email: %s%s\n' % (fg('green'),email,attr(0)) )
+
         new = 0
         page = 1
         if _verbose:
@@ -185,77 +201,27 @@ def searchDomainWhoxy( _domain, _whoxy_key ):
     if _verbose:
         print(t_data['companies'])
         print(t_data['emails'])
-        # exit()
+
+
+def is_blacklisted( str ):
+    for wbl in w_blacklist:
+        if wbl in str.lower():
+            return True
+    return False
 
 
 def extractDatasWhoxy( t_json ):
     global _verbose, t_data
 
-    tmp_data = []
-
     for index in ['technical_contact','registrant_contact','administrative_contact']:
         if index in t_json:
             if index in t_json and len(t_json[index]):
-                if 'company_name' in t_json[index]:
-                    tmp_data.append( t_json[index]['company_name'] )
-                if 'email_address' in t_json[index]:
-                    tmp_data.append( t_json[index]['email_address'] )
-
-    for data in tmp_data:
-        for wbl in w_blacklist:
-            if wbl in data:
-                break
-            if '@' in data:
-                if not data in t_data['emails']:
-                    t_data['emails'].append( data )
-            else:
-                if not data in t_data['companies']:
-                    t_data['companies'].append( data )
+                if 'company_name' in t_json[index] and not is_blacklisted(t_json[index]['company_name']) and not t_json[index]['company_name'] in t_data['companies']:
+                    t_data['companies'].append( t_json[index]['company_name'] )
+                if 'email_address' in t_json[index] and not is_blacklisted(t_json[index]['email_address']) and not t_json[index]['email_address'] in t_data['emails']:
+                    t_data['emails'].append( t_json[index]['email_address'] )
 
     return
-
-
-# def extractDatasWhoxy( t_json ):
-#     global _verbose, t_data
-
-#     for index in ['technical_contact','registrant_contact','administrative_contact']:
-#         if index in t_json:
-#             company,email = extractCompanyNameAndEmail( t_json, t_json[index] )
-#             if company and company not in t_data['companies']:
-#                 t_data['companies'].append( company )
-#             if email and email not in t_data['emails']:
-#                 t_data['emails'].append( email )
-
-#     return
-
-
-# def extractCompanyNameAndEmail( t_json, tab ):
-#     global _verbose, t_data
-
-#     if not 'company_name' in tab:
-#         company = False
-#     elif 'registrant_contact' in t_json and 'company_name' in t_json['registrant_contact']:
-#         company = t_json['registrant_contact']['company_name']
-#         for wbl in w_blacklist:
-#             if wbl in company.lower():
-#                 company = False
-#                 break
-#     else:
-#         company = False
-
-#     if not 'email_address' in tab:
-#         email = False
-#     elif 'registrant_contact' in t_json and 'email_address' in t_json['registrant_contact']:
-#         email = t_json['registrant_contact']['email_address']
-#         for wbl in w_blacklist:
-#             if wbl in email.lower():
-#                 email = False
-#                 break
-#     else:
-#         email = False
-
-#     return company,email
-
 
 
 parser = argparse.ArgumentParser()
