@@ -10,7 +10,7 @@ import argparse
 import tldextract
 from colored import fg, bg, attr
 
-w_blacklist = [ 'privacy', 'redacted', 'destination', 'dnstination', 'west', 'select request email', 'markmonitor', 'nameshield', 'service noms de domaine' ]
+w_blacklist = [ 'privacy', 'redacted', 'destination', 'dnstination', 'west', 'select request email', 'markmonitor', 'nameshield', 'service noms de domaine', 'technical manager' ]
 
 
 # https://twitter.com/intigriti/status/1639610098954932225
