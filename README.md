@@ -25,7 +25,7 @@ This Python tool does not search for similar domains, it uses the informations o
 Implemented sources are:
 
 - builtwith.com  
-- whoxy.com  
+- whoxy.com (credits required)  
 - crtsh  
 
 ## Requirements
@@ -65,7 +65,7 @@ options:
 
 ## How it works
 
-- whoxy, reliance: pretty good  
+- whoxy, reliance: pretty good (credits required)  
   get domains with the same infos (contact mails and company names) of the domain supplied  
   ex: paypal.com -> PayPal Inc.
 
